@@ -13,10 +13,7 @@ error LDiamond__InvalidAddressZero();
 error LDiamond__InvalidReplacementWithSameFunction();
 error LDiamond__NoSelectors();
 
-error LDiamond__InitializationFailed(
-    address init,
-    bytes data
-);
+error LDiamond__InitializationFailed(address init, bytes data);
 
 error LDiamond__OnlyOwner();
 
@@ -30,11 +27,7 @@ library LDiamond {
     /// EVENTS ///
     //////////////
 
-    event DiamondCut(
-        IDiamondCut.FacetCut[] _cut,
-        address _init,
-        bytes _data
-    );
+    event DiamondCut(IDiamondCut.FacetCut[] _cut, address _init, bytes _data);
 
     event OwnershipTransferred(
         address indexed pastOwner,
@@ -51,19 +44,19 @@ library LDiamond {
     struct FacetAddressAndPosition {
         /// @notice Facet address
         address facetAddress;
-        /// @notice Facet position in 'facetFunctionSelectors.functionSelectors' array
+        /// @notice Facet position in `facetFunctionSelectors.functionSelectors` array
         uint96 functionSelectorPosition;
     }
 
     struct FacetFunctionSelectors {
         /// @notice Function selectors
         bytes4[] functionSelectors;
-        /// @notice Position of 'facetAddress' in 'facetAddresses' array
+        /// @notice Position of `facetAddress` in `facetAddresses` array
         uint256 facetAddressPosition;
     }
 
     struct DiamondStorage {
-        /// @notice Position of selector in 'facetFunctionSelectors.selectors' array
+        /// @notice Position of selector in `facetFunctionSelectors.selectors` array
         mapping(bytes4 => FacetAddressAndPosition) selectorToFacetAndPosition;
         /// @notice Facet addresses to function selectors
         mapping(address => FacetFunctionSelectors) facetFunctionSelectors;
@@ -123,7 +116,12 @@ library LDiamond {
         address _init,
         bytes memory _data
     ) internal {
-        for (uint256 facetIndex; facetIndex < _cut.length; ++facetIndex) {
+        for (uint256 facetIndex; facetIndex < _cut.length; ) {
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++facetIndex;
+            }
+
             IDiamondCut.FacetCutAction action = _cut[facetIndex].action;
 
             if (action == IDiamondCut.FacetCutAction.Add) {
@@ -171,12 +169,14 @@ library LDiamond {
             addFacet(ds, _facet);
         }
 
-        for (
-            uint256 selectorIndex;
-            selectorIndex < _selectors.length;
-            ++selectorIndex
-        ) {
+        for (uint256 selectorIndex; selectorIndex < _selectors.length; ) {
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++selectorIndex;
+            }
+
             bytes4 selector = _selectors[selectorIndex];
+
             address oldFacetAddress = ds
                 .selectorToFacetAndPosition[selector]
                 .facetAddress;
@@ -211,12 +211,14 @@ library LDiamond {
         if (selectorPosition == 0) {
             addFacet(ds, _facet);
         }
-        for (
-            uint256 selectorIndex;
-            selectorIndex < _selectors.length;
-            ++selectorIndex
-        ) {
+        for (uint256 selectorIndex; selectorIndex < _selectors.length; ) {
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++selectorIndex;
+            }
+
             bytes4 selector = _selectors[selectorIndex];
+
             address oldFacetAddress = ds
                 .selectorToFacetAndPosition[selector]
                 .facetAddress;
@@ -243,12 +245,14 @@ library LDiamond {
 
         if (_facet != address(0)) revert LDiamond__AddressMustBeZero();
 
-        for (
-            uint256 selectorIndex;
-            selectorIndex < _selectors.length;
-            ++selectorIndex
-        ) {
+        for (uint256 selectorIndex; selectorIndex < _selectors.length; ) {
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++selectorIndex;
+            }
+
             bytes4 selector = _selectors[selectorIndex];
+
             address oldFacetAddress = ds
                 .selectorToFacetAndPosition[selector]
                 .facetAddress;
@@ -310,11 +314,12 @@ library LDiamond {
             .functionSelectors
             .length - 1;
 
-        /// @notice Replaces '_selector' with 'lastSelector' if not they are not the same
+        /// @notice Replaces `_selector` with `lastSelector` if not they are not the same
         if (selectorPosition != lastSelectorPosition) {
             bytes4 lastSelector = ds
                 .facetFunctionSelectors[_facet]
                 .functionSelectors[lastSelectorPosition];
+
             ds.facetFunctionSelectors[_facet].functionSelectors[
                 selectorPosition
             ] = lastSelector;
@@ -341,6 +346,7 @@ library LDiamond {
                 address lastFacetAddress = ds.facetAddresses[
                     lastFacetAddressPosition
                 ];
+
                 ds.facetAddresses[facetAddressPosition] = lastFacetAddress;
                 ds
                     .facetFunctionSelectors[lastFacetAddress]
@@ -356,9 +362,7 @@ library LDiamond {
     /// @notice Initialize diamond cut
     /// @param _init Address of the initialization contract
     /// @param _data Data
-    function initializeDiamondCut(address _init, bytes memory _data)
-        internal
-    {
+    function initializeDiamondCut(address _init, bytes memory _data) internal {
         if (_init == address(0)) {
             return;
         }
@@ -386,6 +390,7 @@ library LDiamond {
     function enforceHasContractCode(address _contract) internal view {
         uint256 contractSize;
 
+        /// @solidity memory-safe-assembly
         assembly {
             contractSize := extcodesize(_contract)
         }
