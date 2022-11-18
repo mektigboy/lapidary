@@ -15,8 +15,6 @@ error LDiamond__InvalidReplacementWithSameFunction();
 error LDiamond__NoSelectors();
 error LDiamond__OnlyOwner();
 
-
-
 /// @title LDiamond
 /// @author mektigboy
 /// @author Modified from Nick Mudge: https://github.com/mudgen/diamond-3-hardhat
