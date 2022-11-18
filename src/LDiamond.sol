@@ -28,7 +28,7 @@ library LDiamond {
     event DiamondCut(IDiamondCut.FacetCut[] _cut, address _init, bytes _data);
 
     event OwnershipTransferred(
-        address indexed pastOwner,
+        address indexed oldOwner,
         address indexed newOwner
     );
 
@@ -78,6 +78,7 @@ library LDiamond {
     {
         bytes32 position = DIAMOND_STORAGE_POSITION;
 
+        /// @solidity memory-safe-assembly
         assembly {
             ds.slot := position
         }
