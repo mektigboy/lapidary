@@ -9,13 +9,13 @@ error LDiamond__ImmutableFunction();
 error LDiamond__IncorrectAction();
 error LDiamond__InexistentFacetCode();
 error LDiamond__InexistentFunction();
+error LDiamond__InitializationFailed(address init, bytes data);
 error LDiamond__InvalidAddressZero();
 error LDiamond__InvalidReplacementWithSameFunction();
 error LDiamond__NoSelectors();
-
-error LDiamond__InitializationFailed(address init, bytes data);
-
 error LDiamond__OnlyOwner();
+
+
 
 /// @title LDiamond
 /// @author mektigboy
