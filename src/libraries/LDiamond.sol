@@ -40,14 +40,14 @@ library LDiamond {
         keccak256("diamond.standard.diamond.storage");
 
     struct FacetAddressAndPosition {
-        /// @notice Facet address
+        /// @notice Address of the facet
         address facetAddress;
-        /// @notice Facet position in `facetFunctionSelectors.functionSelectors` array
+        /// @notice Position of the facet in `facetFunctionSelectors.functionSelectors` array
         uint96 functionSelectorPosition;
     }
 
     struct FacetFunctionSelectors {
-        /// @notice Function selectors
+        /// @notice Selectors of functions
         bytes4[] functionSelectors;
         /// @notice Position of `facetAddress` in `facetAddresses` array
         uint256 facetAddressPosition;
@@ -56,13 +56,13 @@ library LDiamond {
     struct DiamondStorage {
         /// @notice Position of selector in `facetFunctionSelectors.selectors` array
         mapping(bytes4 => FacetAddressAndPosition) selectorToFacetAndPosition;
-        /// @notice Facet addresses to function selectors
+        /// @notice Addresses of the facets to selectors of the functions
         mapping(address => FacetFunctionSelectors) facetFunctionSelectors;
         /// @notice Facet addresses
         address[] facetAddresses;
         /// @notice Query if contract implements an interface
         mapping(bytes4 => bool) supportedInterfaces;
-        /// @notice Owner of contract
+        /// @notice Owner of the contract
         address owner;
     }
 
@@ -84,7 +84,7 @@ library LDiamond {
         }
     }
 
-    /// @notice Update diamond owner
+    /// @notice Update the owner of the diamond
     /// @param _owner New owner
     function updateContractOwner(address _owner) internal {
         DiamondStorage storage ds = diamondStorage();
@@ -96,12 +96,12 @@ library LDiamond {
         emit OwnershipTransferred(oldOwner, _owner);
     }
 
-    /// @notice Get diamond owner
+    /// @notice Get the owner of the diamond
     function contractOwner() internal view returns (address owner_) {
         owner_ = diamondStorage().owner;
     }
 
-    /// @notice Enforce is diamond owner
+    /// @notice Enforce is the owner of the diamond
     function enforceIsOwner() internal view {
         if (diamondStorage().owner != msg.sender) revert LDiamond__OnlyOwner();
     }
@@ -162,11 +162,9 @@ library LDiamond {
             ds.facetFunctionSelectors[_facet].functionSelectors.length
         );
 
-        /// @notice Add new facet address if it does not exists already
+        /// @notice Add a new facet address if it does not exists already
 
-        if (selectorPosition == 0) {
-            addFacet(ds, _facet);
-        }
+        if (selectorPosition == 0) addFacet(ds, _facet);
 
         for (uint256 selectorIndex; selectorIndex < _selectors.length; ) {
             /// @notice Realistically impossible to overflow/underflow
@@ -185,7 +183,10 @@ library LDiamond {
 
             addFunction(ds, selector, selectorPosition, _facet);
 
-            ++selectorPosition;
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++selectorPosition;
+            }
         }
     }
 
@@ -205,11 +206,10 @@ library LDiamond {
             ds.facetFunctionSelectors[_facet].functionSelectors.length
         );
 
-        /// @notice Add new facet address if it does not exists already
+        /// @notice Add a new facet address if it does not exists already
 
-        if (selectorPosition == 0) {
-            addFacet(ds, _facet);
-        }
+        if (selectorPosition == 0) addFacet(ds, _facet);
+
         for (uint256 selectorIndex; selectorIndex < _selectors.length; ) {
             /// @notice Realistically impossible to overflow/underflow
             unchecked {
@@ -226,9 +226,13 @@ library LDiamond {
                 revert LDiamond__InvalidReplacementWithSameFunction();
 
             removeFunction(ds, oldFacetAddress, selector);
+            
             addFunction(ds, selector, selectorPosition, _facet);
 
-            ++selectorPosition;
+            /// @notice Realistically impossible to overflow/underflow
+            unchecked {
+                ++selectorPosition;
+            }
         }
     }
 
@@ -292,8 +296,8 @@ library LDiamond {
 
     /// @notice Remove a function from the diamond
     /// @param ds DiamondStorage
-    /// @param _facet Facet address
-    /// @param _selector Facet address
+    /// @param _facet Address of the facet
+    /// @param _selector Selector of the function
     function removeFunction(
         DiamondStorage storage ds,
         address _facet,
@@ -304,7 +308,7 @@ library LDiamond {
         /// @notice An immutable function is defined directly inside the diamond
         if (_facet == address(this)) revert LDiamond__ImmutableFunction();
 
-        /// @notice Replaces selector with last selector, then deletes last selector
+        /// @notice Replaces selector with the last selector, then deletes the last selector
         uint256 selectorPosition = ds
             .selectorToFacetAndPosition[_selector]
             .functionSelectorPosition;
@@ -313,7 +317,7 @@ library LDiamond {
             .functionSelectors
             .length - 1;
 
-        /// @notice Replaces `_selector` with `lastSelector` if not they are not the same
+        /// @notice Replaces `_selector` with `lastSelector`, if not, they are not the same
         if (selectorPosition != lastSelectorPosition) {
             bytes4 lastSelector = ds
                 .facetFunctionSelectors[_facet]
@@ -327,15 +331,15 @@ library LDiamond {
                 .functionSelectorPosition = uint96(selectorPosition);
         }
 
-        /// @notice Deletes last selector
+        /// @notice Deletes the last selector
 
         ds.facetFunctionSelectors[_facet].functionSelectors.pop();
 
         delete ds.selectorToFacetAndPosition[_selector];
 
-        /// @notice Deletes facet address if there are no more selectors for facet address
+        /// @notice Deletes the facet address if there are no more selectors for the facet address
         if (lastSelectorPosition == 0) {
-            /// @notice Replaces facet address with last facet address, deletes last facet address
+            /// @notice Replaces facet address with the last facet address, then deletes the last facet address
             uint256 lastFacetAddressPosition = ds.facetAddresses.length - 1;
             uint256 facetAddressPosition = ds
                 .facetFunctionSelectors[_facet]
@@ -362,9 +366,7 @@ library LDiamond {
     /// @param _init Address of the initialization contract
     /// @param _data Data
     function initializeDiamondCut(address _init, bytes memory _data) internal {
-        if (_init == address(0)) {
-            return;
-        }
+        if (_init == address(0)) return;
 
         enforceHasContractCode(_init);
 
